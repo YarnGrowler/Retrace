@@ -1,56 +1,58 @@
 # Retrace
 
-Retrace turns a finished raster drawing into a natural-looking speed-drawing video. It extracts ink, skeletonizes it into drawable paths, orders those paths, and progressively reveals the original grayscale pixels as the pencil travels. The goal is an actual drawing process—not a broad wipe, paint reveal, or a handful of manually authored vector paths.
+Retrace turns a finished raster drawing into a natural-looking speed-drawing video. It extracts ink, skeletonizes it into drawable paths, orders those paths, and progressively reveals the original grayscale pixels as the pencil travels.
 
-## Examples
+## Use case
 
-### City — 25 seconds
+Retrace is for artists, developers, and researchers who want to present a finished black-and-white illustration as if it is being drawn live. It is especially useful for portfolio demos, process studies, visual explanations, and experiments in computer vision and human-like motion.
+
+## City demo — 25 seconds
 
 ![Inline 25-second city drawing preview](output/city-preview.gif)
 
-The preview above plays directly in the README. The full-resolution H.264 version is [`output/city.mp4`](output/city.mp4).
+The preview plays directly in the README. The full-resolution H.264 version is [`output/city.mp4`](output/city.mp4).
 
-Input: [`city.png`](city.png) · Output: [`output/city.mp4`](output/city.mp4)
+Input: [`city.png`](city.png)
 
-### Town
+## Documentation at a glance
 
-[Download or play the town example](output/town.mp4)
+| Part | What it does | Main file |
+| --- | --- | --- |
+| Input | Loads a raster drawing and extracts dark ink | `drawing/preprocess.py` |
+| Skeleton | Reduces ink to drawable centerlines while preserving shading guides | `drawing/preprocess.py` |
+| Tracing | Converts the skeleton graph into individual paths | `drawing/trace.py` |
+| Ordering | Assigns structural, medium, and detail stages | `drawing/order.py` |
+| Rendering | Reveals source pixels along the pencil trajectories | `drawing/render.py` |
+| CLI | Runs the complete pipeline and writes the MP4 | `draw.py` |
 
-Input: [`town.png`](town.png) · Output: [`output/town.mp4`](output/town.mp4)
+## Installation and running
 
-## Run it
+This is currently a source-based Python project, not a published pip package. Install it with a virtual environment:
 
 ```powershell
+git clone https://github.com/YarnGrowler/Retrace.git
+cd Retrace
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python draw.py town.png
-```
-
-Use a fixed duration:
-
-```powershell
 python draw.py city.png --duration 25 --fps 30 --no-preview
 ```
 
-Use automatic timing when every small stroke needs visible pencil time:
+The output is written to `output/city.mp4`. Use `--duration auto` when every small stroke needs visible time under the pencil. Use `--debug` to write binary, skeleton, stroke-order, and reconstruction-difference images.
 
-```powershell
-python draw.py town.png --duration auto
-```
+## Q&A
 
-The H.264 video is written as `output/<input-name>.mp4`. The original grayscale artwork controls the final appearance, while the extracted trajectories control when each pixel becomes visible. `--debug` writes intermediate binary, skeleton, stroke-order, and reconstruction-difference images.
+**Is Retrace a pip package?**  
+Not yet. The virtual-environment workflow above is the right installation method while the command-line interface and shading model are still changing.
 
-## Why shaded drawings are harder
+**Would a pip package be better later?**  
+Yes. Once the pipeline is stable, a package with a `retrace` command would make installation cleaner and allow other programs to call the renderer as a library. Packaging should come after the input/output API is settled; it will not by itself solve the computer-vision problems.
 
-The city and town images are mostly line art, so a one-pixel skeleton is a reasonable description of the source. A train, motorcycle, or heavily shaded illustration is different: a dark patch may be an outline, a shadow, cross-hatching, or several overlapping surfaces. If all of those pixels are skeletonized together, the tracer can create long parallel paths and the renderer can leave large blank patches until a later pass. That produces the horizontal “eraser streak” appearance.
+**Why does the city result work better than heavily shaded illustrations?**  
+The city is mostly clean line art. In a heavily shaded drawing, outlines, shadows, cross-hatching, and filled dark regions all become similar binary foreground during preprocessing. The tracer can then create parallel guides, and the ordering pass can leave blank patches until a later pass, producing horizontal eraser-like streaks.
 
-The next improvement should be a shading-aware intermediate representation:
+**What is the next technical fix?**  
+Separate contours, hatching, and filled-tone regions before skeletonization; divide dense tone into local patches; finish each patch before moving away; and use local pixel ownership plus a coverage check. That is more important than adding 3D at this stage.
 
-1. Separate contours, hatching, and filled-tone regions before skeletonization.
-2. Divide dense tone regions into small connected patches with a coverage score.
-3. Finish each patch locally before moving to a distant patch.
-4. Use local stroke ownership inside a patch while preserving the source grayscale values.
-5. Add an ordering check that prevents a region from being left with unresolved coverage debt.
-
-This keeps the faithful 2D result as the default while making a future depth-aware or 2.5D mode possible.
+**What does the renderer preserve?**  
+The final appearance comes from the original grayscale image. The extracted trajectories control when pixels appear, so the result can use thousands of small paths without flattening the source into a few thick vector strokes.

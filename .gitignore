@@ -2,15 +2,13 @@ __pycache__/
 .venv/
 *.pyc
 
-# Keep only the two published input examples.
+# Keep only the published input example.
 *.png
 !city.png
-!town.png
 
-# Keep only the two published videos.
+# Keep only the published video.
 *.mp4
 !output/city.mp4
-!output/town.mp4
 
 # Generated debug artifacts and intermediate stroke data.
 output/*.png
