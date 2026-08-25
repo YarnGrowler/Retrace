@@ -6,9 +6,9 @@ Retrace turns a finished raster drawing into a natural-looking speed-drawing vid
 
 ### City — 25 seconds
 
-<video src="output/city.mp4" controls width="900"></video>
+![Inline 25-second city drawing preview](output/city-preview.gif)
 
-[Download or play the 25-second H.264 city video](output/city.mp4)
+The preview above plays directly in the README. The full-resolution H.264 version is [`output/city.mp4`](output/city.mp4).
 
 Input: [`city.png`](city.png) · Output: [`output/city.mp4`](output/city.mp4)
 
